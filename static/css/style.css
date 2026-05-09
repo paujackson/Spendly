@@ -584,3 +584,239 @@ a { color: inherit; text-decoration: none; }
     .nav-links a:not(.nav-cta) { display: none; }
     .hero { padding: 3rem 1rem 2rem; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Hero — centered single-column layout (landing page)                 */
+/* ------------------------------------------------------------------ */
+
+.hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: 4rem 2rem 4rem;
+    max-width: 860px;
+    gap: 3rem;
+}
+
+.hero-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 500;
+}
+
+.hero-badge-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.hero-title-green {
+    display: block;
+    color: var(--accent);
+    font-style: normal;
+}
+
+.hero-subtitle {
+    max-width: 560px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Mock browser card                                                   */
+/* ------------------------------------------------------------------ */
+
+.mock-browser {
+    background: var(--paper-warm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.mock-browser-bar {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.mock-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.mock-dot-red    { background: #ff5f57; }
+.mock-dot-yellow { background: #febc2e; }
+.mock-dot-green  { background: #28c840; }
+
+.mock-browser-body {
+    padding: 0 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mock-stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+.mock-stat-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    text-align: left;
+}
+
+.mock-stat-label {
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+    margin-bottom: 0.3rem;
+}
+
+.mock-stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.mock-stat-delta {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+}
+
+.mock-delta-danger  { color: var(--danger); }
+.mock-delta-success { color: var(--accent); }
+
+.mock-cats-row {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    text-align: left;
+}
+
+.mock-cat-row {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mock-cat-name {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    text-align: right;
+}
+
+.mock-cat-track {
+    height: 8px;
+    background: var(--border-soft);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.mock-cat-fill {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.mock-cat-food   { background: #e8a020; }
+.mock-cat-travel { background: #4a8fd4; }
+.mock-cat-bills  { background: #7b6fd4; }
+
+/* ------------------------------------------------------------------ */
+/* Video modal                                                         */
+/* ------------------------------------------------------------------ */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.modal-overlay.is-open {
+    display: flex;
+}
+
+.modal-box {
+    position: relative;
+    background: var(--ink);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    width: 100%;
+    max-width: 800px;
+}
+
+.modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 2rem;
+    height: 2rem;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: background 0.2s;
+}
+
+.modal-close:hover { background: rgba(255, 255, 255, 0.3); }
+
+.modal-video-wrap {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+}
+
+.modal-video-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Landing page responsive overrides                                   */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+    .hero { padding: 3rem 1rem 2rem; }
+    .hero-visual { display: flex !important; }
+    .mock-stats-row { grid-template-columns: 1fr; }
+}
