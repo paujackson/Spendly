@@ -1,4 +1,5 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
+from werkzeug.security import generate_password_hash
 from database.db import get_db, init_db, seed_db
 
 app = Flask(__name__)
@@ -17,9 +18,43 @@ def landing():
     return render_template("landing.html")
 
 
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    return render_template("register.html")
+    if request.method == "GET":
+        return render_template("register.html")
+
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not name or not email or not password or not confirm_password:
+        return render_template("register.html", error="All fields are required.")
+
+    if len(name) > 100:
+        return render_template("register.html", error="Name must be 100 characters or fewer.")
+    if "@" not in email or "." not in email.split("@")[-1] or len(email) > 254:
+        return render_template("register.html", error="Enter a valid email address.")
+    if len(password) < 8:
+        return render_template("register.html", error="Password must be at least 8 characters.")
+
+    if password != confirm_password:
+        return render_template("register.html", error="Passwords do not match.")
+
+    db = get_db()
+    existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+    if existing:
+        db.close()
+        return render_template("register.html", error="Email already registered.")
+
+    db.execute(
+        "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+        (name, email, generate_password_hash(password))
+    )
+    db.commit()
+    db.close()
+
+    return redirect(url_for("login"))
 
 
 @app.route("/login")
@@ -67,4 +102,4 @@ def delete_expense(id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(debug=True, use_reloader=False,port=5001)
