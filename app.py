@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
-from werkzeug.security import generate_password_hash
+from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db, init_db, seed_db
 
 app = Flask(__name__)
+app.secret_key = "spendly-dev-secret"
 
 with app.app_context():
     init_db()
@@ -57,9 +58,35 @@ def register():
     return redirect(url_for("login"))
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
+
+    if request.method == "GET":
+        return render_template("login.html")
+
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+
+    if not email or not password:
+        return render_template("login.html", error="Invalid email or password")
+
+    db = get_db()
+    user = db.execute(
+        "SELECT id, name, password_hash FROM users WHERE email = ?", (email,)
+    ).fetchone()
+
+    if not user or not check_password_hash(user["password_hash"], password):
+        db.close()
+        return render_template("login.html", error="Invalid email or password")
+
+    session.clear()
+    session["user_id"] = user["id"]
+    session["user_name"] = user["name"]
+    db.close()
+    flash(f"Welcome back, {user['name']}!", "success")
+    return redirect(url_for("landing"))
 
 
 # ------------------------------------------------------------------ #
@@ -76,9 +103,10 @@ def privacy():
     return render_template("privacy.html")
 
 
-@app.route("/logout")
+@app.route("/logout", methods=["POST"])
 def logout():
-    return "Logout — coming in Step 3"
+    session.clear()
+    return redirect(url_for("landing"))
 
 
 @app.route("/profile")
