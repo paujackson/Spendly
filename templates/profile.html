@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}My Profile — Spendly{% endblock %}
+
+{% block content %}
+{% set cat_class = {
+    "Food": "food",
+    "Bills": "bills",
+    "Shopping": "shopping",
+    "Health": "health",
+    "Transport": "transport",
+    "Entertainment": "entertainment",
+    "Other": "other"
+} %}
+
+<div class="profile-page">
+  <div class="profile-inner">
+
+    <!-- User info card -->
+    <div class="profile-user-card">
+      <div class="profile-avatar">{{ user.initials }}</div>
+      <div class="profile-user-info">
+        <h1 class="profile-user-name">{{ user.name }}</h1>
+        <p class="profile-user-email">{{ user.email }}</p>
+        <p class="profile-user-since">
+          <i data-lucide="calendar"></i>
+          Member since {{ user.member_since }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="profile-stats-row">
+
+      <div class="profile-stat-card">
+        <div class="profile-stat-icon"><i data-lucide="dollar-sign"></i></div>
+        <p class="profile-stat-label">Total Spent</p>
+        <p class="profile-stat-value">${{ stats.total_spent }}</p>
+      </div>
+
+      <div class="profile-stat-card">
+        <div class="profile-stat-icon"><i data-lucide="receipt"></i></div>
+        <p class="profile-stat-label">Transactions</p>
+        <p class="profile-stat-value">{{ stats.transaction_count }}</p>
+      </div>
+
+      <div class="profile-stat-card">
+        <div class="profile-stat-icon"><i data-lucide="tag"></i></div>
+        <p class="profile-stat-label">Top Category</p>
+        <p class="profile-stat-value profile-stat-value--accent2">{{ stats.top_category }}</p>
+      </div>
+
+    </div>
+
+    <!-- Transaction history + chart row -->
+    <div class="profile-main-row">
+
+      <!-- Transaction history -->
+      <div>
+        <h2 class="profile-section-heading">Transaction History</h2>
+        <div class="profile-table-card">
+          <table class="profile-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for tx in transactions %}
+              <tr>
+                <td class="profile-table-date">{{ tx.date }}</td>
+                <td>{{ tx.description }}</td>
+                <td>
+                  <span class="cat-badge cat-badge--{{ cat_class[tx.category] | default('other') }}">
+                    {{ tx.category }}
+                  </span>
+                </td>
+                <td class="profile-table-amount">${{ tx.amount }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Spending chart -->
+      <div>
+        <h2 class="profile-section-heading">Spend by Category</h2>
+        <div class="profile-chart-card">
+          <svg id="cat-chart" class="profile-chart-svg" aria-label="Spending by category bar chart"></svg>
+          <script id="chart-data" type="application/json">
+            {{ categories | tojson }}
+          </script>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>lucide.createIcons();</script>
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById('chart-data').textContent);
+  const svg = document.getElementById('cat-chart');
+  const W = svg.clientWidth || 340;
+  const BAR_H = 28;
+  const GAP = 14;
+  const LABEL_W = 96;
+  const VAL_W = 52;
+  const BAR_AREA = W - LABEL_W - VAL_W - 16;
+  const H = data.length * (BAR_H + GAP) - GAP + 8;
+  const MAX_PCT = Math.max(...data.map(d => d.pct));
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('height', H);
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const style = getComputedStyle(document.documentElement);
+  const accent   = style.getPropertyValue('--accent').trim();
+  const inkFaint = style.getPropertyValue('--ink-faint').trim();
+  const inkSoft  = style.getPropertyValue('--ink-soft').trim();
+  const border   = style.getPropertyValue('--border-soft').trim();
+
+  data.forEach((cat, i) => {
+    const y = i * (BAR_H + GAP);
+    const barW = Math.max(4, (cat.pct / MAX_PCT) * BAR_AREA);
+
+    // label
+    const label = document.createElementNS(ns, 'text');
+    label.setAttribute('x', 0);
+    label.setAttribute('y', y + BAR_H / 2 + 5);
+    label.setAttribute('font-size', '12');
+    label.setAttribute('fill', inkSoft);
+    label.setAttribute('font-family', 'DM Sans, system-ui, sans-serif');
+    label.textContent = cat.name;
+    svg.appendChild(label);
+
+    // track
+    const track = document.createElementNS(ns, 'rect');
+    track.setAttribute('x', LABEL_W);
+    track.setAttribute('y', y + (BAR_H - 10) / 2);
+    track.setAttribute('width', BAR_AREA);
+    track.setAttribute('height', 10);
+    track.setAttribute('rx', 5);
+    track.setAttribute('fill', border);
+    svg.appendChild(track);
+
+    // fill
+    const fill = document.createElementNS(ns, 'rect');
+    fill.setAttribute('x', LABEL_W);
+    fill.setAttribute('y', y + (BAR_H - 10) / 2);
+    fill.setAttribute('width', 0);
+    fill.setAttribute('height', 10);
+    fill.setAttribute('rx', 5);
+    fill.setAttribute('fill', accent);
+    svg.appendChild(fill);
+
+    // animate fill
+    requestAnimationFrame(() => {
+      fill.style.transition = `width 0.5s ease ${i * 0.07}s`;
+      fill.setAttribute('width', barW);
+    });
+
+    // value
+    const val = document.createElementNS(ns, 'text');
+    val.setAttribute('x', LABEL_W + BAR_AREA + 10);
+    val.setAttribute('y', y + BAR_H / 2 + 5);
+    val.setAttribute('font-size', '12');
+    val.setAttribute('font-weight', '600');
+    val.setAttribute('fill', inkFaint);
+    val.setAttribute('font-family', 'DM Sans, system-ui, sans-serif');
+    val.textContent = '$' + cat.total;
+    svg.appendChild(val);
+  });
+})();
+</script>
+{% endblock %}
