@@ -6,7 +6,7 @@ def test_login_get(client):
 def test_login_success(client):
     r = client.post("/login", data={"email": "demo@spendly.com", "password": "demo123"})
     assert r.status_code == 302
-    assert r.headers["Location"].endswith("/")
+    assert "/profile" in r.headers["Location"]
     with client.session_transaction() as sess:
         assert "user_id" in sess
 
@@ -15,7 +15,7 @@ def test_login_already_logged_in(client):
     client.post("/login", data={"email": "demo@spendly.com", "password": "demo123"})
     r = client.get("/login")
     assert r.status_code == 302
-    assert r.headers["Location"].endswith("/")
+    assert "/profile" in r.headers["Location"]
 
 
 def test_login_wrong_password(client):
