@@ -28,6 +28,38 @@
       </div>
     </div>
 
+    <!-- Date filter bar -->
+    <div class="profile-filter-bar">
+      <div class="filter-presets">
+        <a href="{{ url_for('profile') }}"
+           class="filter-btn{% if active_preset == 'all' %} filter-btn--active{% endif %}">
+          All Time
+        </a>
+        <a href="{{ url_for('profile', date_from=presets.this_month[0], date_to=presets.this_month[1]) }}"
+           class="filter-btn{% if active_preset == 'this_month' %} filter-btn--active{% endif %}">
+          This Month
+        </a>
+        <a href="{{ url_for('profile', date_from=presets.last_3_months[0], date_to=presets.last_3_months[1]) }}"
+           class="filter-btn{% if active_preset == 'last_3_months' %} filter-btn--active{% endif %}">
+          Last 3 Months
+        </a>
+        <a href="{{ url_for('profile', date_from=presets.last_6_months[0], date_to=presets.last_6_months[1]) }}"
+           class="filter-btn{% if active_preset == 'last_6_months' %} filter-btn--active{% endif %}">
+          Last 6 Months
+        </a>
+      </div>
+
+      <form class="filter-custom" method="get" action="{{ url_for('profile') }}">
+        <input type="date" name="date_from" value="{{ date_from }}" class="filter-date-input">
+        <span class="filter-date-sep">to</span>
+        <input type="date" name="date_to" value="{{ date_to }}" class="filter-date-input">
+        <button type="submit"
+                class="filter-btn filter-btn--apply{% if active_preset == 'custom' %} filter-btn--active{% endif %}">
+          Apply
+        </button>
+      </form>
+    </div>
+
     <!-- Summary stats -->
     <div class="profile-stats-row">
 
@@ -128,6 +160,16 @@
   const inkSoft  = style.getPropertyValue('--ink-soft').trim();
   const border   = style.getPropertyValue('--border-soft').trim();
 
+  const catColors = {
+    'Food':          style.getPropertyValue('--accent-2').trim(),
+    'Bills':         accent,
+    'Shopping':      style.getPropertyValue('--cat-shopping').trim(),
+    'Health':        style.getPropertyValue('--cat-health').trim(),
+    'Transport':     style.getPropertyValue('--cat-transport').trim(),
+    'Entertainment': style.getPropertyValue('--cat-entertainment').trim(),
+    'Other':         style.getPropertyValue('--ink-muted').trim(),
+  };
+
   data.forEach((cat, i) => {
     const y = i * (BAR_H + GAP);
     const barW = Math.max(4, (cat.pct / MAX_PCT) * BAR_AREA);
@@ -159,7 +201,7 @@
     fill.setAttribute('width', 0);
     fill.setAttribute('height', 10);
     fill.setAttribute('rx', 5);
-    fill.setAttribute('fill', accent);
+    fill.setAttribute('fill', catColors[cat.name] || accent);
     svg.appendChild(fill);
 
     // animate fill
