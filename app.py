@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import date, datetime, timedelta
 from database.db import get_db, init_db, seed_db
 from database.queries import (
     get_user_by_id,
@@ -10,6 +11,13 @@ from database.queries import (
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret"
+
+
+def _parse_iso(s):
+    try:
+        return datetime.strptime(s, "%Y-%m-%d").date()
+    except (ValueError, TypeError, AttributeError):
+        return None
 
 with app.app_context():
     init_db()
@@ -128,12 +136,48 @@ def profile():
     words = user["name"].split()
     user["initials"] = "".join(w[0] for w in words if w)[:2].upper()
 
-    stats = get_summary_spending_stats(user_id)
-    transactions = get_recent_transactions(user_id)
-    categories = get_category_breakdown(user_id)
+    raw_from = request.args.get("date_from", "")
+    raw_to   = request.args.get("date_to", "")
+    df = _parse_iso(raw_from)
+    dt = _parse_iso(raw_to)
 
-    return render_template("profile.html", user=user, stats=stats,
-                           transactions=transactions, categories=categories)
+    date_from = date_to = None
+    if df and dt:
+        if df > dt:
+            flash("Start date must be before end date.", "error")
+        else:
+            date_from = df.isoformat()
+            date_to   = dt.isoformat()
+
+    today = date.today()
+    first_of_month = today.replace(day=1)
+    presets = {
+        "this_month":    (first_of_month.isoformat(), today.isoformat()),
+        "last_3_months": ((today - timedelta(days=90)).isoformat(), today.isoformat()),
+        "last_6_months": ((today - timedelta(days=180)).isoformat(), today.isoformat()),
+    }
+
+    if not date_from and not date_to:
+        active_preset = "all"
+    elif (date_from, date_to) == presets["this_month"]:
+        active_preset = "this_month"
+    elif (date_from, date_to) == presets["last_3_months"]:
+        active_preset = "last_3_months"
+    elif (date_from, date_to) == presets["last_6_months"]:
+        active_preset = "last_6_months"
+    else:
+        active_preset = "custom"
+
+    stats = get_summary_spending_stats(user_id, date_from, date_to)
+    transactions = get_recent_transactions(user_id, date_from=date_from, date_to=date_to)
+    categories = get_category_breakdown(user_id, date_from, date_to)
+
+    return render_template(
+        "profile.html",
+        user=user, stats=stats, transactions=transactions, categories=categories,
+        presets=presets, active_preset=active_preset,
+        date_from=date_from or "", date_to=date_to or "",
+    )
 
 
 @app.route("/expenses/add")
@@ -152,4 +196,4 @@ def delete_expense(id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False,port=5001)
+    app.run(debug=True, use_reloader=False, port=5001)
